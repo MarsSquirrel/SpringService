@@ -47,7 +47,7 @@ local function SpringAnimation(start, target, velocity, response, damping, dt)
 	return target + displacement, velocity
 end
 
-function Spring.new(object: GuiObject, response: number, damping: number, properties: {[string]: any})
+function Spring.new(instace: Instance, response: number, damping: number, properties: {[string]: any})
 	local self = setmetatable({}, Spring)
 
 	self.Response = response
@@ -55,12 +55,12 @@ function Spring.new(object: GuiObject, response: number, damping: number, proper
 
 	self.Velocity = 0
 	self.Target = properties
-	self.Object = object
+	self.Instance = instace
 
 	self.Time = 0
 	self.TimeLength = SpringDuration(0, 1, self.Velocity, self.Response, self.Damping)
 
-	self.Connection = nil
+	self._Connection = nil
 
 	self.Finished = Signal.new()
 	self.Stopped = Signal.new()
@@ -86,30 +86,30 @@ function Spring:Play(graph: Frame?)
 	local graphY = 0
 	local graphV = 0
 
-	self.Connection = RunService.RenderStepped:Connect(function(deltaTime)
+	self._Connection = RunService.RenderStepped:Connect(function(deltaTime)
 		self.Time += deltaTime
 
 		if self.Time >= self.TimeLength then
-			self.Connection:Disconnect()
-			self.Connection = nil
+			self._Connection:Disconnect()
+			self._Connection = nil
 			self.Time = 0
 			self.Finished:Fire()
 		end
 		
 		for property, targetValue in pairs(self.Target) do
-			if self.Object[property] == nil then
+			if self.Instance[property] == nil then
 				continue
 			end
 
-			if self.Object[property] == targetValue then
+			if self.Instance[property] == targetValue then
 				continue
 			end
 
 			if property == "Position" or property == "Size" then
-				local x1 = self.Object[property].X.Scale
-				local x2 = self.Object[property].X.Offset
-				local y1 = self.Object[property].Y.Scale
-				local y2 = self.Object[property].Y.Offset
+				local x1 = self.Instance[property].X.Scale
+				local x2 = self.Instance[property].X.Offset
+				local y1 = self.Instance[property].Y.Scale
+				local y2 = self.Instance[property].Y.Offset
 
 				local s1, s2, s3, s4 = 0, 0, 0, 0
 				local v1, v2, v3, v4 = 0, 0, 0, 0
@@ -128,12 +128,12 @@ function Spring:Play(graph: Frame?)
 
 				velocities[property] = {v1,v2,v3,v4}
 
-				self.Object[property] = UDim2.new(s1, s2, s3, s4)
+				self.Instance[property] = UDim2.new(s1, s2, s3, s4)
 			end
 
 			if property == "AnchorPoint" then
-				local x = self.Object.AnchorPoint.X
-				local y = self.Object.AnchorPoint.Y
+				local x = self.Instance.AnchorPoint.X
+				local y = self.Instance.AnchorPoint.Y
 
 				local s1, s2 = 0, 0
 				local v1, v2 = 0, 0
@@ -149,11 +149,11 @@ function Spring:Play(graph: Frame?)
 				s2, v2 = SpringAnimation(y, targetValue.Y, v2, self.Response, self.Damping, deltaTime)
 				
 				velocities[property] = {v1, v2}
-				self.Object.AnchorPoint = Vector2.new(s1, s2)
+				self.Instance.AnchorPoint = Vector2.new(s1, s2)
 			end
 
 			if property == "Rotation" then
-				local rotation = self.Object.Rotation
+				local rotation = self.Instance.Rotation
 				local s1, v1 = 0, 0
 
 				for i, v in pairs(velocities) do
@@ -195,9 +195,9 @@ function Spring:PlayAndWait()
 end
 
 function Spring:Stop()
-	if self.Connection then
-		self.Connection:Disconnect()
-		self.Connection = nil
+	if self._Connection then
+		self._Connection:Disconnect()
+		self._Connection = nil
 
 		self.Velocity = 0
 
