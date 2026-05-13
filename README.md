@@ -17,27 +17,77 @@ Spring.new(instance, response, damping, properties)
 ### Instance: `Instance`
 The `Spring` object's `Instance` to animate
 
+```lua
+Spring.Instance
+```
+
 ### Response: `number`
+Essentially how "snappy" the spring feels. The higher the `response`, the slower the `Spring` feels. The `response` is somewhat inversely related to the frequency:
+
+$f = 2pi/response$
+
+The `response` doesn't necesarily mean the "duration", it's just how fast the `Spring` feels. Some simple examples:
+* `response = 0.3` - Quick, "snappy", tighter UI (Great for buttons)
+* `response = 0.6` - Slower, "smooth" (Great for larger changes in motion)
+
+```lua
+Spring.Response
+```
 
 ### Damping: `number`
+The `damping` or "dampingRation" is basically how "bouncy" the `Spring` is. Lower values mean more bounce.
+* `damping = 0` - Infinite bouncing
+* `damping = 0.5` - Very bouncy (underdamped)
+* `damping = 1` - No bounce (critically damped)
+* `damping > 1` - Slower and smoother, no overshooting or "bounce"
+
+Damping controls how the `Spring` settles.
+
+```lua
+Spring.Damping
+```
 
 ### Target: `{[string]: any}`
 The target properties of the `Spring` - Defined from the `properties` parameter.
 
+```lua
+Spring.Target
+```
+
 ### Velocity: `number`
 The current instantaneous velocity of the `Spring`
+
+```lua
+Spring.Velocity
+```
 
 ### Time: `number`
 The current time, in seconds, of the animation
 
+```lua
+Spring.Time
+```
+
 ### TimeLength: `number`
 The total time, in seconds, of the animation
+
+```lua
+Spring.TimeLength
+```
 
 ### Finished: `RBXScriptSignal`
 Fired when the animation is finished (`Time` = `TimeLength`)
 
+```lua
+Spring.Finsished
+```
+
 ### Stopped: `RBXScriptSignal`
 Fired when the animation is stopped using the `Stop()` method
+
+```lua
+Spring.Stopped
+```
 
 ## Methods
 ### Play()
