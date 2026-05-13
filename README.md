@@ -65,8 +65,8 @@ This works the same as `TweenService` properties. Some examples:
 As shown above, multiple properties can be given in the `properties` array.
 
 The above would show what the "inputted" properties would look like. The outputted would look like this:
-* `{[Position] = {.5,0}, {.5,0}`
-* `{[AnchorPoint] = {.5,.5}, [Size] = {.25,0}, {.3,0}`
+* `[Position] = {.5,0}, {.5,0}`
+* `[AnchorPoint] = {.5,.5}, [Size] = {.25,0}, {.3,0}`
 
 ```lua
 Spring.Target
@@ -87,7 +87,7 @@ The physics is essentially a combination of the `SpringForce` and the `DampingFo
 
 > $F_{damping} = -c(v)$
 
-> $a = \frac{F_{spring} + F_{damping}}{m}
+> $a = \frac{F_{spring} + F_{damping}}{m}$
 
 Then the velocity is taken from the acceleration over time.
 
