@@ -202,7 +202,6 @@ function Spring:SetTarget(properties:{[string]: any})
 		self.Target[property] = targetValue
 	end
 	
-	
 	self.TimeLength += SpringDuration(0, 1, self.Velocity, self.Response, self.Damping)
 end
 
