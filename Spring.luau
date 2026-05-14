@@ -215,6 +215,11 @@ function Spring:Play()
 			self._Connection:Disconnect()
 			self._Connection = nil
 			self.Time = 0
+
+			for property, targetValue in pairs(self.Target) do
+				self.Instance[property] = targetValue
+			end
+
 			self.Finished:Fire()
 		end
 
