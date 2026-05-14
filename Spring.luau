@@ -169,7 +169,7 @@ local function SpringAnimation(start, target, velocity, response, damping, dt)
 	return target + displacement, velocity
 end
 
-function Spring.new(instace: Instance, response: number, damping: number, properties: {[string]: any})
+function Spring.new(instance: Instance, response: number, damping: number, properties: {[string]: any})
 	local self = setmetatable({}, Spring)
 
 	self.Response = response
@@ -177,7 +177,7 @@ function Spring.new(instace: Instance, response: number, damping: number, proper
 
 	self.Velocity = 0
 	self.Target = properties
-	self.Instance = instace
+	self.Instance = instance
 
 	self.Time = 0
 	self.TimeLength = SpringDuration(0, 1, self.Velocity, self.Response, self.Damping)
@@ -190,7 +190,7 @@ function Spring.new(instace: Instance, response: number, damping: number, proper
 	return self
 end
 
-function Spring:SetTarget(properties:{[string]: any})
+function Spring:SetTarget(properties: {[string]: any})
 	for property, targetValue in pairs(properties) do
 		for property2, _ in pairs(self.Target) do
 			if property == property2 then
@@ -198,15 +198,25 @@ function Spring:SetTarget(properties:{[string]: any})
 				continue
 			end
 		end
-		
+
 		self.Target[property] = targetValue
 	end
-	
-	self.TimeLength += SpringDuration(0, 1, self.Velocity, self.Response, self.Damping)
+
+	local timeLength = SpringDuration(0, 1, self.Velocity, self.Response, self.Damping)
+
+	if self._Connection then
+		self.TimeLength += timeLength
+	else
+		self.TimeLength = timeLength
+	end
 end
 
 function Spring:Play()
 	local velocities = {}
+
+	if self._Connection then
+		return
+	end
 
 	self._Connection = RunService.RenderStepped:Connect(function(deltaTime)
 		self.Time += deltaTime
@@ -221,6 +231,7 @@ function Spring:Play()
 			end
 
 			self.Finished:Fire()
+			return
 		end
 
 		for property, targetValue in pairs(self.Target) do
@@ -279,8 +290,8 @@ function Spring:Play()
 				self.Instance.AnchorPoint = Vector2.new(s1, s2)
 			end
 
-			if property == "Rotation" then
-				local rotation = self.Instance.Rotation
+			if property == ("Rotation" or "BackgroundTransparency" or "TextTransparency" or "Transparency" or "ImageTransparency") then
+				local value = self.Instance[property]
 				local s1, v1 = 0, 0
 
 				for i, v in pairs(velocities) do
@@ -290,9 +301,9 @@ function Spring:Play()
 					end
 				end
 
-				s1, v1 = SpringAnimation(rotation, targetValue, v1, self.Response, self.Damping, deltaTime)
+				s1, v1 = SpringAnimation(value, targetValue, v1, self.Response, self.Damping, deltaTime)
 				velocities[property] = {v1}
-				self.Object.Rotation = s1
+				self.Instance[property] = s1
 			end
 		end
 	end)
