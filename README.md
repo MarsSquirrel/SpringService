@@ -91,7 +91,7 @@ The physics is essentially a combination of the `SpringForce` and the `DampingFo
 
 Then the velocity is taken from the acceleration over time.
 
-However, the direct equation from above ($v(t)$) is the way that velocity is calculated in this system to maintain smooth and stable motion.
+However, the direct equation from above ( $v(t)$ ) is the way that velocity is calculated in this system to maintain smooth and stable motion.
 
 ```lua
 Spring.Velocity
