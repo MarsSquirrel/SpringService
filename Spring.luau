@@ -128,20 +128,30 @@ local Spring = {}
 Spring.__index = Spring
 
 local function SpringDuration(start, target, velocity, response, damping)
-	local epsilon = 0.001
+	local epsilon = 0.0001
 
 	local displacement = start - target
 
 	local omega = 2 * math.pi / response
 
 	if damping >= 1 then
-		return math.log(math.abs(displacement) / epsilon) / omega
+		local decayRate = omega
+		if damping > 1 then
+			decayRate = omega * (damping - math.sqrt(damping^2 - 1))
+		end
+
+		local c2 = velocity + (omega * damping * displacement)
+		local effectiveAmp = math.abs(displacement) + math.abs(c2 / decayRate)
+		
+		return math.log(effectiveAmp / epsilon) / decayRate
 	end
 
 	local dampedOmega = omega * math.sqrt(1 - damping^2)
 	local peakAmp = math.sqrt(displacement^2 + ((velocity + damping * omega * displacement) / dampedOmega)^2)
 
-	return math.log(peakAmp / epsilon) / (damping * omega)
+	local amplitudeRatio = math.max(1, peakAmp / epsilon)
+
+	return math.log(amplitudeRatio) / (damping * omega)
 end
 
 local function SpringAnimation(start, target, velocity, response, damping, dt)
