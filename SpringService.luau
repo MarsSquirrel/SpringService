@@ -253,7 +253,7 @@ function Spring:Play()
 				continue
 			end
 
-			if property == "Position" or property == "Size" then
+			if typeof(targetValue) == "UDim2" then
 				local x1 = self.Instance[property].X.Scale
 				local x2 = self.Instance[property].X.Offset
 				local y1 = self.Instance[property].Y.Scale
@@ -279,9 +279,9 @@ function Spring:Play()
 				self.Instance[property] = UDim2.new(s1, s2, s3, s4)
 			end
 
-			if property == "AnchorPoint" then
-				local x = self.Instance.AnchorPoint.X
-				local y = self.Instance.AnchorPoint.Y
+			if typeof(targetValue) == "Vector2" then
+				local x = self.Instance[property].X
+				local y = self.Instance[property].Y
 
 				local s1, s2 = 0, 0
 				local v1, v2 = 0, 0
@@ -300,7 +300,28 @@ function Spring:Play()
 				self.Instance.AnchorPoint = Vector2.new(s1, s2)
 			end
 
-			if property == ("Rotation" or "BackgroundTransparency" or "TextTransparency" or "Transparency" or "ImageTransparency") then
+			if typeof(targetValue) == "UDim" then
+				local x = self.Instance[property].Scale
+				local y = self.Instance[property].Offset
+
+				local s1, s2 = 0, 0
+				local v1, v2 = 0, 0
+
+				for i, v in pairs(velocities) do
+					if i == property then
+						v1, v2 = unpack(v)
+						break
+					end
+				end
+
+				s1, v1 = SpringAnimation(x, targetValue.Scale, v1, self.Response, self.Damping, deltaTime)
+				s2, v2 = SpringAnimation(y, targetValue.Offset, v2, self.Response, self.Damping, deltaTime)
+
+				velocities[property] = {v1, v2}
+				self.Instance.CornerRadius = UDim.new(s1, s2)
+			end
+
+			if typeof(targetValue) == "number" then
 				local value = self.Instance[property]
 				local s1, v1 = 0, 0
 
