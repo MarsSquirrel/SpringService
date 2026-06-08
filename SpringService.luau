@@ -127,13 +127,17 @@ setmetatable(Signal, {
 local Spring = {}
 Spring.__index = Spring
 
+-- Calculate spring duration
 local function SpringDuration(start, target, velocity, response, damping)
+	-- Rounding (smaller value = more accurate timing)
 	local epsilon = 0.0001
 
 	local displacement = start - target
 
+	-- Calculate the frequency
 	local omega = 2 * math.pi / response
 
+	-- Handle overdamping
 	if damping >= 1 then
 		local decayRate = omega
 		if damping > 1 then
@@ -154,14 +158,18 @@ local function SpringDuration(start, target, velocity, response, damping)
 	return math.log(amplitudeRatio) / (damping * omega)
 end
 
+-- Handle the spring animation
 local function SpringAnimation(start, target, velocity, response, damping, dt)
 	local displacement = start - target
 
+	-- Frequency
 	local omega = 2 * math.pi / response
 
 	local expTerm = math.exp(-damping * omega * dt)
 
 	local cosTerm, sinTerm
+
+	-- Underdamped
 	if damping < 1 then
 		local dampedOmega = omega * math.sqrt(1 - damping^2)
 		cosTerm = math.cos(dampedOmega * dt)
@@ -179,27 +187,29 @@ local function SpringAnimation(start, target, velocity, response, damping, dt)
 	return target + displacement, velocity
 end
 
+-- Creates a new spring object
 function Spring.new(instance: Instance, response: number, damping: number, properties: {[string]: any})
 	local self = setmetatable({}, Spring)
 
-	self.Response = response
-	self.Damping = damping
+	self.Response = response -- inversely related to frequency (higher response = slower animation)
+	self.Damping = damping -- "Bouncyness" (d<1 - bouncy, d=1 - smooth, d>1 = overdamped)
 
-	self.Velocity = 0
+	self.Velocity = 0 -- The instantaneous average velocity of the spring
 	self.Target = properties
 	self.Instance = instance
 
-	self.Time = 0
-	self.TimeLength = SpringDuration(0, 1, self.Velocity, self.Response, self.Damping)
+	self.Time = 0 -- The instantaneous time, in seconds, of the spring animation
+	self.TimeLength = SpringDuration(0, 1, self.Velocity, self.Response, self.Damping) -- The total duration, in seconds, of the spring
 
 	self._Connection = nil
 
-	self.Finished = Signal.new()
-	self.Stopped = Signal.new()
+	self.Finished = Signal.new() -- Fired upon completion
+	self.Stopped = Signal.new() -- Fired upon calling Spring:Stop()
 
 	return self
 end
 
+-- Changes the target of the spring (Can be changed during playback)
 function Spring:SetTarget(properties: {[string]: any})
 	for property, targetValue in pairs(properties) do
 		for property2, _ in pairs(self.Target) do
@@ -221,16 +231,19 @@ function Spring:SetTarget(properties: {[string]: any})
 	end
 end
 
+-- Play the spring
 function Spring:Play()
-	local velocities = {}
+	local velocities = {} -- Holds each velocity individually, due to each value on the property getting animated seperately
 
+	-- Cancel playback if the spring is already playing
 	if self._Connection then
 		return
 	end
 
 	self._Connection = RunService.RenderStepped:Connect(function(deltaTime)
-		self.Time += deltaTime
+		self.Time = deltaTime -- Set the time equal to the amount of time that has passed since the stepped function started
 
+		-- Stop the spring and set it's property equal to the target (Spring is finished)
 		if self.Time >= self.TimeLength then
 			self._Connection:Disconnect()
 			self._Connection = nil
@@ -244,15 +257,19 @@ function Spring:Play()
 			return
 		end
 
+		-- Loop through each property and calculate the new value for each individually
 		for property, targetValue in pairs(self.Target) do
+			-- If the property doesn't exist, move to the next property
 			if self.Instance[property] == nil then
 				continue
 			end
 
+			-- If the instance already is at the target value, move to the next property
 			if self.Instance[property] == targetValue then
 				continue
 			end
 
+			-- Specific for UDim2
 			if typeof(targetValue) == "UDim2" then
 				local x1 = self.Instance[property].X.Scale
 				local x2 = self.Instance[property].X.Offset
@@ -279,6 +296,7 @@ function Spring:Play()
 				self.Instance[property] = UDim2.new(s1, s2, s3, s4)
 			end
 
+			-- Specific for Vector2
 			if typeof(targetValue) == "Vector2" then
 				local x = self.Instance[property].X
 				local y = self.Instance[property].Y
@@ -300,6 +318,7 @@ function Spring:Play()
 				self.Instance.AnchorPoint = Vector2.new(s1, s2)
 			end
 
+			-- Specific for UDim
 			if typeof(targetValue) == "UDim" then
 				local x = self.Instance[property].Scale
 				local y = self.Instance[property].Offset
@@ -321,6 +340,7 @@ function Spring:Play()
 				self.Instance.CornerRadius = UDim.new(s1, s2)
 			end
 
+			-- Specific for any number
 			if typeof(targetValue) == "number" then
 				local value = self.Instance[property]
 				local s1, v1 = 0, 0
@@ -340,11 +360,13 @@ function Spring:Play()
 	end)
 end
 
+-- Plays the spring and halts further script execution until the Spring.Finished signal is fired
 function Spring:PlayAndWait()
 	self:Play()
 	self.Finished:Wait()
 end
 
+-- Stops the spring in it's current position (Harsh stop)
 function Spring:Stop()
 	if self._Connection then
 		self._Connection:Disconnect()
