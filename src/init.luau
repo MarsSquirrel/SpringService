@@ -190,7 +190,7 @@ function Spring.new(instance: Instance, response: number, damping: number)
 	self.Damping = damping
 
 	self.Velocity = 0
-	self.Target = nil
+	self.Target = {}
 	self.Instance = instance
 
 	self.Time = 0
