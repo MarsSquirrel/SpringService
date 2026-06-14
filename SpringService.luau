@@ -50,7 +50,7 @@ setmetatable(Connection, {
 	end,
 	__newindex = function(tb, key, value)
 		error(("Attempt to set Connection::%s (not a valid member)"):format(tostring(key)), 2)
-	end
+	end,
 })
 
 local Signal = {}
@@ -94,7 +94,7 @@ end
 
 function Signal:Wait()
 	local waitingCoroutine = coroutine.running()
-	local cn;
+	local cn
 	cn = self:Connect(function(...)
 		cn:Disconnect()
 		task.spawn(waitingCoroutine, ...)
@@ -103,7 +103,7 @@ function Signal:Wait()
 end
 
 function Signal:Once(fn)
-	local cn;
+	local cn
 	cn = self:Connect(function(...)
 		if cn._connected then
 			cn:Disconnect()
@@ -119,7 +119,7 @@ setmetatable(Signal, {
 	end,
 	__newindex = function(tb, key, value)
 		error(("Attempt to set Signal::%s (not a valid member)"):format(tostring(key)), 2)
-	end
+	end,
 })
 
 -- SPRING CLASS STARTS
@@ -137,17 +137,17 @@ local function SpringDuration(start, target, velocity, response, damping)
 	if damping >= 1 then
 		local decayRate = omega
 		if damping > 1 then
-			decayRate = omega * (damping - math.sqrt(damping^2 - 1))
+			decayRate = omega * (damping - math.sqrt(damping ^ 2 - 1))
 		end
 
 		local c2 = velocity + (omega * damping * displacement)
 		local effectiveAmp = math.abs(displacement) + math.abs(c2 / decayRate)
-		
+
 		return math.log(effectiveAmp / epsilon) / decayRate
 	end
 
-	local dampedOmega = omega * math.sqrt(1 - damping^2)
-	local peakAmp = math.sqrt(displacement^2 + ((velocity + damping * omega * displacement) / dampedOmega)^2)
+	local dampedOmega = omega * math.sqrt(1 - damping ^ 2)
+	local peakAmp = math.sqrt(displacement ^ 2 + ((velocity + damping * omega * displacement) / dampedOmega) ^ 2)
 
 	local amplitudeRatio = math.max(1, peakAmp / epsilon)
 
@@ -163,14 +163,18 @@ local function SpringAnimation(start, target, velocity, response, damping, dt)
 
 	local cosTerm, sinTerm
 	if damping < 1 then
-		local dampedOmega = omega * math.sqrt(1 - damping^2)
+		local dampedOmega = omega * math.sqrt(1 - damping ^ 2)
 		cosTerm = math.cos(dampedOmega * dt)
 		sinTerm = math.sin(dampedOmega * dt)
 
 		local coeff = (velocity + damping * omega * displacement) / dampedOmega
 
 		displacement = expTerm * (displacement * cosTerm + coeff * sinTerm)
-		velocity = expTerm * (velocity * (cosTerm - damping * omega * sinTerm/dampedOmega) - displacement * omega * sinTerm * dampedOmega)
+		velocity = expTerm
+			* (
+				velocity * (cosTerm - damping * omega * sinTerm / dampedOmega)
+				- displacement * omega * sinTerm * dampedOmega
+			)
 	else
 		displacement = expTerm * (displacement + (velocity + omega * displacement) * dt)
 		velocity = expTerm * (velocity - omega * (velocity + omega * displacement) * dt)
@@ -200,7 +204,7 @@ function Spring.new(instance: Instance, response: number, damping: number)
 	return self
 end
 
-function Spring:SetTarget(properties: {[string]: any})
+function Spring:SetTarget(properties: { [string]: any })
 	for property, targetValue in pairs(properties) do
 		for property2, _ in pairs(self.Target) do
 			if property == property2 then
@@ -219,7 +223,7 @@ function Spring:SetTarget(properties: {[string]: any})
 	else
 		self.TimeLength = timeLength
 	end
-	
+
 	self:Play()
 end
 
@@ -229,7 +233,7 @@ function Spring:Play()
 	if self._Connection then
 		return
 	end
-	
+
 	if self.Instance == nil then
 		warn("[SpringService] - Instance for spring is nil. Spring not playing")
 		return
@@ -281,7 +285,7 @@ function Spring:Play()
 				s3, v3 = SpringAnimation(y1, targetValue.Y.Scale, v3, self.Response, self.Damping, deltaTime)
 				s4, v4 = SpringAnimation(y2, targetValue.Y.Offset, v4, self.Response, self.Damping, deltaTime)
 
-				velocities[property] = {v1,v2,v3,v4}
+				velocities[property] = { v1, v2, v3, v4 }
 
 				self.Instance[property] = UDim2.new(s1, s2, s3, s4)
 			end
@@ -303,7 +307,7 @@ function Spring:Play()
 				s1, v1 = SpringAnimation(x, targetValue.X, v1, self.Response, self.Damping, deltaTime)
 				s2, v2 = SpringAnimation(y, targetValue.Y, v2, self.Response, self.Damping, deltaTime)
 
-				velocities[property] = {v1, v2}
+				velocities[property] = { v1, v2 }
 				self.Instance.AnchorPoint = Vector2.new(s1, s2)
 			end
 
@@ -324,7 +328,7 @@ function Spring:Play()
 				s1, v1 = SpringAnimation(x, targetValue.Scale, v1, self.Response, self.Damping, deltaTime)
 				s2, v2 = SpringAnimation(y, targetValue.Offset, v2, self.Response, self.Damping, deltaTime)
 
-				velocities[property] = {v1, v2}
+				velocities[property] = { v1, v2 }
 				self.Instance.CornerRadius = UDim.new(s1, s2)
 			end
 
@@ -340,7 +344,7 @@ function Spring:Play()
 				end
 
 				s1, v1 = SpringAnimation(value, targetValue, v1, self.Response, self.Damping, deltaTime)
-				velocities[property] = {v1}
+				velocities[property] = { v1 }
 				self.Instance[property] = s1
 			end
 		end
@@ -356,6 +360,23 @@ function Spring:Stop()
 
 		self.Stopped:Fire()
 	end
+end
+
+function Spring:Destroy()
+	self:Stop()
+
+	-- clean up each signal
+	if self.Finished then
+		self.Finished:DisconnectAll()
+	end
+
+	if self.Stopped then
+		self.Stopped:DisconnectAll()
+	end
+
+	-- Clear rest of the table
+	table.clear(self)
+	setmetatable(self, nil)
 end
 
 return Spring
