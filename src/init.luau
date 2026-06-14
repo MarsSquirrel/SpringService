@@ -45,10 +45,10 @@ function Connection:Disconnect()
 end
 
 setmetatable(Connection, {
-	__index = function(tb, key)
+	__index = function(_tb, key)
 		error(("Attempt to get Connection::%s (not a valid member)"):format(tostring(key)), 2)
 	end,
-	__newindex = function(tb, key, value)
+	__newindex = function(_tb, key, _value)
 		error(("Attempt to set Connection::%s (not a valid member)"):format(tostring(key)), 2)
 	end,
 })
