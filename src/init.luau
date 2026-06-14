@@ -114,10 +114,10 @@ function Signal:Once(fn)
 end
 
 setmetatable(Signal, {
-	__index = function(tb, key)
+	__index = function(_tb, key)
 		error(("Attempt to get Signal::%s (not a valid member)"):format(tostring(key)), 2)
 	end,
-	__newindex = function(tb, key, value)
+	__newindex = function(_tb, key, _value)
 		error(("Attempt to set Signal::%s (not a valid member)"):format(tostring(key)), 2)
 	end,
 })
